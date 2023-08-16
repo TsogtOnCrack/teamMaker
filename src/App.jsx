@@ -32,18 +32,30 @@ const DATA = [
 function App() {
   
   const [data, setData] = useState(DATA)
-  const [people, setPeople] = useState(["cehck"])
+  const [people, setPeople] = useState([])
 
-  //innitialize local storage
-  useEffect(() => {
-    data.map((el) => {
-      localStorage.setItem(el.name, el.skill)
-      setPeople(...people, el.name)
+
+  const setUpLocalStorage = () =>{
+
+    for (let i = 0; i < length(DATA); i++ ){
+      setPeople([...people, data[i].name])
+    }
+
+    DATA.map((el)=>{
+      localStorage.setItem(el.name, el.skill)    
     })
 
     console.log(people)
-  }, [])
+  }
 
+  useEffect(()=>{
+    setData(JSON.parse(localStorage.getItem("data")))
+
+    data.map((el)=>{
+      localStorage.setItem(el.name, el.skill)
+    })
+
+  },[])
 
 
 
@@ -56,7 +68,11 @@ function App() {
 
       <div className='flex flex-row w-full'>
 
-        <People list = {people}/>
+        <button onClick={()=>{
+          setUpLocalStorage()
+        }}>SETUP</button>
+
+        <People list = {data}/>
         <Teams />
 
       </div>
