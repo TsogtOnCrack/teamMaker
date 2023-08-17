@@ -7,12 +7,12 @@ export const People = ({list}) =>{
 
     const handleChange = response =>{
 
-        console.log(response)
+        // console.log(response)
         localStorage.setItem(response.name, response.skill)
         
     }
 
-    return <div className="w-[50vw] max-h-[70vh] overflow-y-scroll flex flex-col pl-14">
+    return <div className="w-[50vw] max-h-[60vh] overflow-y-scroll flex flex-col pl-14">
 
         {list.map((el)=>{
             
