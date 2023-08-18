@@ -1,12 +1,26 @@
-import { useState } from "react"
-import {Team} from "./Team"
+import { Team } from "./Team";
+import { useEffect, useState } from "react";
 
-export const Teams = ({numOfTeams}) =>{
+export const Teams = ({ teamsList }) => {
 
-    // const [teams, setTeams] = useState(new Array(numOfTeams))
+  return (
+    <div className="w-[50vw] max-h-[60vh] h-fit flex flex-wrap overflow-y-scroll">
+      {teamsList &&
+        teamsList.map((el) => {
+          const array = JSON.parse(localStorage.getItem(String(el)));
 
-    return <div className="w-[50vw] max-h-[60vh] h-fit flex flex-wrap overflow-y-scroll">
+          let sum = 0
 
+            array.map((el)=>{
+                sum = sum + Number( localStorage.getItem(String(el)))
+            })
 
+          return (
+            <Team teams={array}>
+              {el + 1} : {sum}
+            </Team>
+          );
+        })}
     </div>
-}
+  );
+};

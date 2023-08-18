@@ -3,7 +3,8 @@ import "./App.css";
 import { People } from "./components/People";
 import { Teams } from "./components/Teams";
 import { useEffect, useState } from "react";
-import { Slider } from "@mui/material";
+import { Slider, formLabelClasses, sliderClasses } from "@mui/material";
+import { computeHeadingLevel } from "@testing-library/react";
 
 const DATA = [
   { name: "Tsogt", skill: 42 },
@@ -16,13 +17,185 @@ const DATA = [
 
 const INITIAL_TEAM_COUNT = 4;
 
+const INITIAL_SPLIT_TYPE = "Tsogt"
+
+const sortData = (data) => {
+  //sorts based on skill
+  // data = [{name: String, skill: Num}, ...]
+
+  for (var i = 0; i < data.length; i++) {
+    for (var j = 0; j < data.length - i - 1; j++) {
+      if (Number(data[j].skill) < Number(data[j + 1].skill)) {
+        var temp = data[j];
+        data[j] = data[j + 1];
+        data[j + 1] = temp;
+      }
+    }
+  }
+
+  return data;
+};
+
+const sum = (arr) => {
+  let s = 0;
+  arr.map((el) => {
+    s = s + el;
+  });
+
+  return s;
+};
+
+const greedyAlgorithm = (groupCount, list) => {
+  list = [...sortData(list)]
+
+  const findSmallest = (arr) => {
+    let min = [999];
+
+    arr.map((el) => {
+      if (sum(el) < sum(min)) {
+        min = el;
+      }
+    });
+
+    return min;
+  };
+
+  let ansNum = []; // initialize answer array
+  for (let i = 0; i < groupCount; i++) {
+    ansNum.push([]);
+  }
+
+  let ans = []; // initialize answer array
+  for (let i = 0; i < groupCount; i++) {
+    ans.push([]);
+  }
+
+  list.map((el) => {
+    const smallestSumArray = findSmallest(ansNum);
+
+    for (let j = 0; j < ansNum.length; j++) {
+      if (ansNum[j] === smallestSumArray) {
+        ansNum[j].push(el.skill);
+        ans[j].push(el.name);
+        break;
+      }
+    }
+  });
+
+  return ans;
+};
+const tsogtAlgorithm = (groupCount, list) => {
+  list = [...sortData(list)];
+
+  let ans = []; // initialize answer array
+  for (let i = 0; i < groupCount; i++) {
+    ans.push([]);
+  }
+
+  //grouping part
+  let ind = -1;
+  for (let i = 0; i < list.length; i++) {
+    if (i % groupCount === 0) {
+      ind++;
+    }
+
+    let j = i - ind * groupCount;
+
+    if (ind % 2 === 0) {
+      j = groupCount - j - 1;
+    }
+
+    ans[j].push(list[i].name);
+  }
+
+  return ans;
+};
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
 function App() {
   const [split, setSplit] = useState(false);
-  const [splitType, setSplitType] = useState("Tsogt");
+  const [splitType, setSplitType] = useState("");
 
   const [data, setData] = useState([]);
   const [people, setPeople] = useState([]);
-  const [teamCount, setTeamCount] = useState(0);
+  const [teams, setTeams] = useState([]);
+  const [teamCount, setTeamCount] = useState();
+
+  const [tempTeamCount, setTempTeamCount] = useState();
+  const [teamUpdater, setTeamUpdater] = useState(0);
+
+  const handlePeopleChange = (response) => {
+    let tempData = [...data]
+    tempData.map((el, i) => {
+      if (el.name == response.name) {
+        console.log("found",el.name , response.name )
+        el = response
+      }
+    });
+    setData(tempData)
+    // MakeTeams(splitType);
+  
+  };
+
+  const makeTeamList = (count) => {
+    if (count === undefined) {
+    } else {
+      let array = [];
+
+      for (let i = 0; i < count; i++) {
+        array.push(i);
+      }
+      setTeams(array);
+    }
+  };
+
+  const MakeTeams = (type) => {
+    console.log("activated")
+    let groupedTeams = [];
+    if (type === "Tsogt") {
+
+      console.log(tsogtAlgorithm(
+        Number(localStorage.getItem("TEAMCOUNT")),
+        data
+      ))
+
+      groupedTeams = [...tsogtAlgorithm(
+        Number(localStorage.getItem("TEAMCOUNT")),
+        data
+      )]
+    }
+
+    if (type === "Greedy") {
+      groupedTeams = [...greedyAlgorithm(
+        Number(localStorage.getItem("TEAMCOUNT")),
+        data
+      )]
+    }
+
+    console.log("=======+>>>>>>>>>>>>",groupedTeams)
+
+    groupedTeams.map((el, i) => {
+      localStorage.setItem(String(i), JSON.stringify(el));
+    });
+    setTeamUpdater(teamUpdater + 1);
+  };
 
   const initializeLocalStorage = () => {
     localStorage.clear();
@@ -44,7 +217,6 @@ function App() {
     DATA.map((el) => {
       peopleAr.push(el.name);
     });
-    console.log(peopleAr);
     setPeople(peopleAr);
 
     //FOR THE TEAMS
@@ -53,10 +225,11 @@ function App() {
 
     for (let i = 0; i < INITIAL_TEAM_COUNT; i++) {
       // setting up empty teams
-
       const numTurnedString = String(i + 1);
       localStorage.setItem(numTurnedString, JSON.stringify([]));
     }
+
+    localStorage.setItem("SPLITYPE", INITIAL_SPLIT_TYPE)
 
     window.location.reload(false); //had to refresh becuase MUI slider component can't change value once initialized
   };
@@ -75,10 +248,26 @@ function App() {
     }
 
     setData(tempAr);
-    setPeople(people.list);
+    setPeople(peopleList);
+
+    //teamssssssssssssssssss
 
     setTeamCount(Number(localStorage.getItem("TEAMCOUNT")));
+    makeTeamList(Number(localStorage.getItem("TEAMCOUNT")));
+
+    setSplitType(localStorage.getItem("SPLITTYPE"))
   }, []);
+
+  useEffect(() => {
+    makeTeamList(teamCount);
+  }, [teamCount]);
+
+  useEffect(() => {
+    MakeTeams(splitType);
+    console.log("recieving")
+  }, [data, splitType, teamCount]);
+
+
 
   return (
     <div className=" bg-indigo-600 w-screen h-screen text-white flex flex-col items-center">
@@ -97,22 +286,62 @@ function App() {
         </button>
 
         <div className="flex flex-row justify-between items-center">
-          <People list={data} />
+          <div className="flex flex-col ">
+            <div
+              className="flex  cursor-pointer flex-row items-center justify-between w-[120px] ml-32 bg-white rounded-md text-black px-2 py-1 "
+            >
+              <div
+                className={`absolute  h-[24px]  rounded-xl bg-green-600 ${
+                  splitType == "Tsogt" ? "-ml-1 w-[50px]" : "ml-12 w-[60px]"
+                } duration-300`}
+              ></div>
+              <div
+                className="z-20"
+                onClick={() => {
+                  setSplitType("Tsogt");
+                  localStorage.setItem("SPLITTYPE", "Tsogt")
+                }}
+              >
+                Tsogt
+              </div>
+              <div
+                className="z-20"
+                onClick={() => {
+                  setSplitType("Greedy");
+                  localStorage.setItem("SPLITTYPE", "Greedy")
+                }}
+              >
+                Greedy
+              </div>
+            </div>
+            <People handlePeopleChange={handlePeopleChange} list = {data} />
+          </div>
 
           <div className="flex flex-col">
             <div className="flex flex-row w-64">
-              <Slider
-                onChange={(event, newValue) => {
-                  setTeamCount(newValue);
+              <input
+                className="text-black"
+                type="text"
+                placeholder="Enter team count"
+                onChange={(e) => {
+                  setTempTeamCount(e.target.value);
                 }}
-                defaultValue={teamCount}
-                min={0}
-                max={20}
-              ></Slider>
+                value={tempTeamCount}
+              />
+
+              <button
+                onClick={() => {
+                  setTeamCount(tempTeamCount);
+                  localStorage.setItem("TEAMCOUNT", tempTeamCount);
+                }}
+                className="bg-green-400 hover:bg-green-500 duration-300 px-2 rounded-r-sm"
+              >
+                set!
+              </button>
               <p className="mx-3">{teamCount}</p>
             </div>
 
-            <Teams numOfTeams={teamCount} />
+            <Teams teamsList={teams} />
           </div>
         </div>
       </div>
